@@ -1,1 +1,1 @@
-# ArtistNetwork
+# Artist Network
