@@ -5,7 +5,7 @@ const express = require("express");
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 // const express = require('express');
-const session = require('express-session');
+//const session = require('express-session');
 
 let upload = multer({ dest: path.join(__dirname, 'uploads') });
 const { MongoClient, ObjectId } = require("mongodb")
@@ -44,7 +44,7 @@ const port = process.env.PORT || 3001;
 
 const http = require("http");
 var cors = require('cors')
-app.use(cors())
+//app.use(cors())
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -54,6 +54,31 @@ const corsOptions = {
   optionSuccessStatus: 200
 }
 app.use(cors(corsOptions));
+
+
+const cookie = require('cookie');
+
+const session = require('express-session');
+app.use(session({
+  secret: 'This is the secret',
+  resave: false,
+  saveUninitialized: true,
+}));
+
+
+var isAuthenticated = function (req, res, next) {
+  if (!req.username) return res.status(401).end("access denied");
+  next();
+};
+
+app.use(function (req, res, next) {
+  var cookies = cookie.parse(req.headers.cookie || '');
+  req.username = (req.session.user) ? req.session.user._id : ''
+  console.log(req)
+  console.log("HTTP request", req.username, req.method, req.url, req.body);
+  next();
+});
+
 //app.use(express.static('frontend'));
 // const server = http.createServer(function (request, response){
 //   response.writeHeader(200, {"Content-Type": 'text/html'});
@@ -84,6 +109,7 @@ app.get("/artistalley", async (request, response) => {
   await getSales();
 })
 
+
 // app.get("/comments", async (request, response) => {
 //   response.status(200).send("Test page3");
 //   await getComments();
@@ -102,6 +128,28 @@ app.get("/studiospace", async (request, response) => {
 //   return response.json("you did it");
 
 // })
+
+app.get("/auth", function (req, response) {
+  console.log(req.session.username);
+  if (req.session.user) {
+    response.status(200).send("success")
+  } else {
+    response.status(404).send("failure")
+  }
+})
+
+app.get('/signout/', function (req, res, next) {
+  req.session.destroy();
+  res.setHeader('Set-Cookie', cookie.serialize('username', '', {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+  }));
+  return res.json({});
+
+});
+
+
+
 
 app.post("/signup", function (request, res) {
 
@@ -137,6 +185,11 @@ app.post("/signup", function (request, res) {
       collection.insertOne(b).then((r) => {
 
         if (r) {
+          // request.session.user = username;
+          // res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+          //   path: '/',
+          //   maxAge: 60 * 60 * 24 * 7
+          // }));
           res.status(200)
           return res.json("");
         } else {
@@ -150,17 +203,88 @@ app.post("/signup", function (request, res) {
   })
 })
 
+// app.get('/api/art/', function (req, res, next) {
+//   let page = parseInt(req.query.page)
+//   // console.log("FAEFFWF")
+//   db = client.db("artistnetworkdb");
+//   let collection = db.collection("artworks");
+//   collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
+//     if ((page + 1) > r.length || page < 0) {
+//       return res.status(400).end();
+//     }
+//     //console.log("this is " + n);
+//     console.log(r)
+//     res.status(200)
+//     //return res.json(r)
+//     return res.json([r[page]])
+//   })
+// })
+
 
 app.get('/api/sale/', function (req, res, next) {
-  console.log("FAEFFWF")
+  let page = parseInt(req.query.page)
+  // console.log("FAEFFWF")
   db = client.db("artistnetworkdb");
   let collection = db.collection("sales");
-  collection.find({}).sort([['_id', -1]]).limit(1).toArray().then((r) => {
-    console.log(r)
-    res.status(200)
-    return res.json(r)
-  })
+  collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
+    if (r.length == 0) {
+      res.status(404).end();
+    }
 
+    if ((page + 1) > r.length || page < 0) {
+      return res.status(400).end();
+    }
+    //console.log("this is " + n);
+    //console.log(r)
+    res.status(200)
+    //return res.json(r)
+    let result = r[page]
+    // console.log(result)
+    if (result === undefined) {
+      return res.json([r[0]])
+    }
+    return res.json([result])
+
+  })
+})
+
+app.get('/api/artfeed/', function (req, res, next) {
+  let page = parseInt(req.query.page)
+  // console.log("FAEFFWF")
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("artworks");
+  collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
+    if (r.length == 0) {
+      res.status(404).end();
+    }
+
+    if ((page + 1) > r.length || page < 0) {
+      return res.status(400).end();
+    }
+    //console.log("this is " + n);
+    // console.log(r)
+    res.status(200)
+    //return res.json(r)
+    let result = r[page]
+    // console.log(result)
+    if (result === undefined) {
+      return res.json([r[0]])
+    }
+    return res.json([result])
+
+  })
+})
+
+app.get("/api/artfeed/:id/", function (req, res, next) {
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("artworks");
+
+  collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
+    //console.log(r)
+    res.setHeader('Content-Type', r[0].image.mimetype);
+    res.sendFile(r[0].image.path);
+
+  })
 })
 
 app.get("/api/sale/:id/", function (req, res, next) {
@@ -168,7 +292,7 @@ app.get("/api/sale/:id/", function (req, res, next) {
   let collection = db.collection("sales");
 
   collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
-    console.log(r)
+    //console.log(r)
 
     res.setHeader('Content-Type', r[0].image.mimetype);
     res.sendFile(r[0].image.path);
@@ -176,10 +300,10 @@ app.get("/api/sale/:id/", function (req, res, next) {
   })
 })
 
-app.post('/api/images/sales/', upload.single('image'), function (req, res, next) {
+app.post('/api/images/sales/', isAuthenticated, upload.single('image'), function (req, res, next) {
 
-  let image = { title: req.body.title, "description": req.body.description, "link": req.body.link, "image": req.file };
-  
+  let image = { title: req.body.title, "description": req.body.description, "link": req.body.link, "image": req.file, "likes": 0 };
+
 
   client.connect().then(() => {
 
@@ -203,45 +327,70 @@ app.post('/api/images/sales/', upload.single('image'), function (req, res, next)
 
 });
 
-// app.post('/api/images/', upload.single('image'), function (req, res, next) {
 
-//   let image = { title: req.body.title, "description": req.body.description, "link": req.body.link, "image": req.file };
-
-
-//   client.connect().then(() => {
-
-//     db = client.db("artistnetworkdb");
-//     var collection = db.collection("sales");
-
-//     collection.insertOne(image).then((r) => {
-
-//       if (r) {
-//         res.status(200)
-//         return res.json("");
-//       } else {
-//         res.status(400)
-//         return res.json("access denied")
-//       }
-//     });
-
-//     // return res.json(image);
-//   })
-
-
-// });
 
 
 app.get('/api/art/', function (req, res, next) {
-  console.log("FAEFFWF")
+  let page = parseInt(req.query.page)
+  let userCookie = req.query.userCookie;
+  // console.log("FAEFFWF")
   db = client.db("artistnetworkdb");
   let collection = db.collection("artworks");
-  collection.find({}).sort([['_id', -1]]).limit(1).toArray().then((r) => {
-    console.log(r)
-    res.status(200)
-    return res.json(r)
-  })
 
+  collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
+    if (r.length == 0) {
+      res.status(404).end()
+    }
+    if ((page + 1) > r.length || page < 0) {
+      return res.status(400).end();
+    }
+    //console.log("this is " + n);
+    //console.log(r)
+    res.status(200)
+    //return res.json(r)
+    let result = r[page]
+    // console.log(result)
+    if (result === undefined) {
+      return res.json([r[0]])
+    }
+    return res.json([result])
+  })
 })
+
+
+
+app.get('/api/art/user/:user/', function (req, res, next) {
+  let page = parseInt(req.query.page)
+  let userCookie = req.params.user;
+  // console.log("FAEFFWF")
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("artworks");
+
+  collection.find({ "username": userCookie }).sort([['_id', -1]]).toArray().then((r) => {
+    console.log("WE MADE IT")
+    if (r.length == 0) {
+      res.status(404).end()
+    }
+    if ((page + 1) > r.length || page < 0) {
+      return res.status(400).end();
+    }
+    //console.log("this is " + n);
+    //console.log(r)
+    res.status(200)
+    //return res.json(r)
+    let result = r[page]
+    // console.log(result)
+    if (result === undefined) {
+      return res.json([r[0]])
+    }
+    return res.json([result])
+  })
+})
+
+
+
+
+
 
 
 app.get("/api/art/:id/", function (req, res, next) {
@@ -250,20 +399,27 @@ app.get("/api/art/:id/", function (req, res, next) {
 
 
   collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
-    console.log(r)
 
     res.setHeader('Content-Type', r[0].image.mimetype);
     res.sendFile(r[0].image.path);
-
   })
 })
 
 
-app.post('/api/images/arts/', upload.single('image'), function (req, res, next) {
+app.post('/api/images/arts/', isAuthenticated, upload.single('image'), function (req, res, next) {
+  let image = { title: req.body.title, "description": req.body.description, "image": req.file, "likes": 0, "username": req.body.username };
+  //console.log(req.body.username);
+  console.log("Hwe WE GO");
+  console.log(req.session.user);
+  console.log()
 
-  let image = { title: req.body.title, "description": req.body.description, "image": req.file };
+  if (req.session.user.username !== req.body.username) {
+    res.status(400)
+    return res.json("");
 
+  }
 
+  console.log("WEDIDIT ")
   client.connect().then(() => {
 
     db = client.db("artistnetworkdb");
@@ -287,44 +443,17 @@ app.post('/api/images/arts/', upload.single('image'), function (req, res, next) 
 });
 
 
-// app.post("/login", function (request, response) {
-//   console.log("hi")
-//   console.log(request.body)
-//   // b = request.body;
-//   console.log("checkpoint 1");
-//   let body = request.body;
-//   let password = body.password
-//   let user = body.username;
-//   console.log(password)
-//   //console.log(formData);
-//   client.connect().then(() => {
-//     console.log("test")
-//     db = client.db("artistnetworkdb");
-//     var collection = db.collection("users");
-//     collection.findOne({ "username": user, "password": password }).then((res) => {
-//       console.log("done")
-//       console.log(res)
-//       if (res) {
-//         response.status(200)
-//         return response.json("you did it");
-//       } else {
-//         response.status(400)
-//         return response.json("access denied")
-//       }
-//     });
-//   });
 
-// })
-
-
-app.delete('/api/items/:id/', (req, res) => {
+app.delete('/api/items/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
 
   let db = client.db('artistnetworkdb'); // Replace with your database name
   let collection = db.collection('artworks'); // Replace with your collection name
 
-  collection.deleteOne({ _id: new ObjectId(itemId) }).then((result) => {
 
+
+  collection.deleteOne({ _id: new ObjectId(itemId) }).then((result) => {
+    //if(result.author !==  req.session.user) return res.status(403).end("forbidden");
     if (result.deletedCount === 1) {
       console.log('Item deleted successfully');
       res.sendStatus(200); // Success
@@ -336,7 +465,7 @@ app.delete('/api/items/:id/', (req, res) => {
 
 });
 
-app.delete('/api/items/sale/:id/', (req, res) => {
+app.delete('/api/items/sale/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
 
   let db = client.db('artistnetworkdb'); // Replace with your database name
@@ -355,14 +484,14 @@ app.delete('/api/items/sale/:id/', (req, res) => {
 
 });
 
-app.put('/api/items/updateart/:id/', (req, res) => {
+app.put('/api/items/updateart/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
-  console.log(itemId)
+  //console.log(itemId)
   let db = client.db('artistnetworkdb'); // Replace with your database name
   let collection = db.collection('artworks'); // Replace with your collection name
-  console.log(req.body)
+  //console.log(req.body)
   collection.updateOne({ _id: new ObjectId(itemId) }, { $set: req.body }).then((result) => {
-    console.log(result)
+    //console.log(result)
     if (result.matchedCount === 1) {
       console.log('Item deleted successfully');
       res.sendStatus(200); // Success
@@ -374,7 +503,7 @@ app.put('/api/items/updateart/:id/', (req, res) => {
 
 });
 
-app.put('/api/items/updatesale/:id/', (req, res) => {
+app.put('/api/items/updatesale/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
   console.log(itemId)
   let db = client.db('artistnetworkdb'); // Replace with your database name
@@ -392,6 +521,54 @@ app.put('/api/items/updatesale/:id/', (req, res) => {
   })
 
 });
+
+app.patch("/api/art/:id/", function (req, res, next) {
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("artworks");
+
+
+  collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
+    r[0].likes = r[0].likes + 1;
+    //return res.json(r);
+    collection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { "likes": r[0].likes } }).then((result) => {
+      console.log(result)
+      if (result.matchedCount === 1) {
+        console.log('Item updated successfully');
+        res.status(200) // Success
+        return res.json(result);
+      } else {
+        console.log('Item not found');
+        res.status(404).end(); // Item not found
+      }
+    })
+
+  })
+})
+
+app.patch("/api/sale/:id/", function (req, res, next) {
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("sales");
+
+
+  collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
+    r[0].likes = r[0].likes + 1;
+    //return res.json(r);
+    collection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { "likes": r[0].likes } }).then((result) => {
+      console.log(result)
+      if (result.matchedCount === 1) {
+        console.log('Item updated successfully');
+        res.status(200) // Success
+        return res.json(result);
+      } else {
+        console.log('Item not found');
+        res.status(404).end(); // Item not found
+      }
+    })
+
+  })
+})
+
+
 
 
 app.post("/login", function (request, response) {
@@ -416,8 +593,18 @@ app.post("/login", function (request, response) {
 
       bcrypt.compare(password, username.password, function (err, res) {
         if (res) {
+          console.log("TESTUBGWFGIAGW")
+          //console.log(username)
+          request.session.user = username;
+          console.log(username.username)
+          response.setHeader('Set-Cookie', cookie.serialize('username', username.username, {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7
+          }));
+
+
           response.status(200)
-          console.log(res);
+          // console.log(res);
           return response.json(username);
         } else {
           response.status(400)
@@ -428,47 +615,7 @@ app.post("/login", function (request, response) {
   })
 })
 
-// app.post("/login", function (request, response) {
-//   console.log("hi")
-//   console.log(request.body)
-//   // b = request.body;
-//   console.log("checkpoint 1");
-//   let body = request.body;
-//   let password = body.password
-//   let user = body.username;
-//   console.log(password)
-//   //console.log(formData);
-//   client.connect().then(() => {
-//     console.log("test")
-//     db = client.db("artistnetworkdb");
-//     var collections = db.collection("users");
-//     console.log(user)
-//     // let x = { "username": user }
-//     // console.log(x)
-//     collections.findOne({ "username": user }).then((username) => {
-//       // console.log("FFFF")
-//       if (!username) return res.status(401).end("access denied");
-//       console.log("done")
-//       bcrypt.compare(password, username.password, function (err, res) {
-//         if (res) {
-//           response.status(200)
-//           // console.log(res);
-//           return response.json(username);
-//         } else {
-//           response.status(400)
-//           return response.json("access denied")
-//         }
 
-//       })
-//       req.session.user = user;
-//       res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-//         path: '/studiospace',
-//         maxAge: 3600000
-//       }));
-//       return res.json(username);
-//     })
-//   })
-// })
 
 
 //set up server listening
@@ -484,86 +631,9 @@ async function conntection() {
   return db;
 }
 
-// Route to serve the HTML file
-// app.use(express.static('public'));
-
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-// });
-
-// app.listen(8888, () => {
-//   console.log('Server at port 8888');
-// });
-
-// Express route handler for handling form submissions
-// app.post('/submit', storeUserData);
-
-//********maybe need to uncomment this later***********
-// // Async function to create a user document in users collection
-// async function storeUserData(formData) {
-//   await client.connect();
-//   db = client.db("artistnetworkdb");
-//   var collection = db.collection("users");
-//   var result = await collection.insertOne(formData);
-//   console.log("form data submitted")
-//   return result;
-
-// };
 
 
 
-// async function setUpDb() {
-//   await client.connect();
-//   db = client.db("artistnetworkdb");
-//   var collection = db.collection("users");
-//   return collection;
-// }
-
-// function confirmUserData(formData) {
-//   users.find(formData, function (err, res) {
-//     console.log("hiXZZZZ")
-//     if (res) return res;
-//   })
-//   // console.log("form data submitted")
-
-
-// };
-
-//testing html form
-// document.getElementById('submit-form').addEventListener('click', async (event) => {
-//   event.preventDefault();
-
-//   const nameInput = document.getElementById('name');
-//   const userInput = document.getElementById('username');
-//   const passInput = document.getElementById('password');
-
-//   var formData = {
-//     name: nameInput.value,
-//     username: userInput.value,
-//     password: passInput.value,
-//   };
-
-//   console.log(nameInput.value);
-
-// await storeUserData(formData);
-
-// });
-
-// const formData = {
-//   name: 'Anna',
-//   username: 'anna123',
-//   password: 'password',
-//   userID: '2',
-//   admin: 'false'
-// };
-
-// storeUserData(formData)
-//   .then(() => {
-//     console.log('Form data stored successfully!');
-//   })
-//   .catch((error) => {
-//     console.error('An error occurred:', error);
-//   });
 
 // Async function to display user document from users collection 
 async function getUsers() {
@@ -592,14 +662,6 @@ async function getSales() {
   // return res;
 }
 
-// Async function to display comment document from comments collection 
-// async function getComments() {
-//   var db = await conntection();
-//   var results = db.collection("comments").find({});
-//   console.log(await results.toArray());
-//   // var res = await results.toArray();
-//   // return res;
-// }
 
 // Meeting Notes
 // Work on error/success messaages
