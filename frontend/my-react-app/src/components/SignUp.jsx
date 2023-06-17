@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 
+
 export function SignUp() {
   // const [data, setData] = useState();
   const nameRef = useRef();
@@ -11,26 +12,17 @@ export function SignUp() {
   const [nameVal, setName] = useState("");
   const [passwordVal, setPass] = useState("");;
   const [userVal, setUser] = useState("");
-  const [copyrightVal, setCopyright] = useState("");
+  const [copyrightVal, setCopyright] = useState("false");
+  // const [signedUp, setSignedUp] = useState("");
+  const [errorMsg, setMsg] = useState("");
+  // const [errMsgVal, setError] = useState("");
   const nav = useNavigate();
+  // const NameA = document.getElementById("name");
+  // const UsernameA = document.getElementById("username");
+  // const PasswordA = document.getElementById("password")
 
 
   function send(sendMethod, url, data) {
-    // var xhr = new XMLHttpRequest();
-    // xhr.onload = function () {
-    //   if (xhr.status !== 200) return;
-    //   else return "not 200"
-    // };
-    // console.log(data)
-    // xhr.open(method, url, true);
-    // if (!data) xhr.send();
-    // else {
-    //   xhr.setRequestHeader('Content-Type', 'application/json');
-    //   console.log("hello")
-    //   let x = JSON.stringify(data)
-    //   console.log(x)
-    //   xhr.send(x);
-    // }
 
     fetch( url, {
       method: sendMethod,
@@ -39,89 +31,114 @@ export function SignUp() {
       },
       body: JSON.stringify(data)
     }).then(response => {
-
+      if (response.status === 200) {
+        nav('/login')
+        // setSignedUp('Please Sign In on the Login Page')
+        return response.json()
+      }
       return response.json()
     })
   }
 
-  // useEffect(() => {
-  //   // const fetchData = async () => {
-  //   //   const response = await fetch(
-  //   //     'http://localhost:3001/signup/'); // Replace '/api/data' with your actual backend API endpoint
-  //   //   const jsonData = await response.json();
-  //   //   setData(jsonData);
-  //   // };
-  //   //fetchData();
-  // }, []);
-
-  function sendData() {
+  function sendData(e) {
+    e.preventDefault()
+    // const nav = useNavigate();
     let nameX = nameVal;
     let pass = passwordVal;
     let user = userVal;
     let copyright = copyrightVal;
     console.log(copyrightVal)
 
+  if (nameRef.current.value === "" ) {
+    nameRef.current.focus();
+    setMsg('Please complete missing information');
+    console.log("heeeeleleoeoeo");
+    return;
+  } 
+  console.log("hiii");
+
+  if (usernameRef.current.value === "" ) {
+    usernameRef.current.focus();
+    setMsg('Please complete missing information');
+    return;
+  } 
+
+  if (passwordRef.current.value === "" ) {
+    passwordRef.current.focus();
+    setMsg('Please complete missing information');
+
+    return;
+  } 
+
+  if (!copyrightVal ) {
+    copyrightRef.current.focus();
+    setMsg('Please complete missing information');
+    return;
+  } 
+
+  console.log("HELLOLOOOOO")
+  
     let bodyX = { name: nameX, username: user, password: pass, copyright: copyright }
 
-    // const options = {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(bodyX)
-    // };
-
-    // fetch('http://localhost:3001/signup/', options)
-    //   .then(response => response.json())
-    //   .then(response => console.log(response))
-
     send("POST", "http://localhost:3001/signup/", bodyX, false, function (event) {
+      console.log(event)
       if (event) {
+
+        // nav('/login')
+        // setSignedUp('Please Sign In on the Login Page')
         return event;
+        // return response.json()
       }
+
     });
-
-  }
-
+    
+}
 
   return (
     <>
       <Header />
-      <h1>Sign Up</h1>
-      <h2>Create Your Account</h2>
-      <div id="signup">
-        <div class="signup_container">
-          <div class="fields">
-            <label for="name" >Name:</label>
-            <input type="text" ref={nameRef} onChange={(event) => { setName(event.target.value) }} />
-          </div>
-          <div class="fields">
-            <label for="username" >Username:</label>
-            <input type="text" ref={usernameRef} onChange={(event) => { setUser(event.target.value) }} />
-          </div>
-          <div class="fields">
-            <label for="password" >Password:</label>
-            <input type="password" ref={passwordRef} onChange={(event) => { setPass(event.target.value) }} />
-          </div>
-          <div>
-            <input type="checkbox" id="copyright" name="copyright" value="agree" ref={copyrightRef} onChange={(event) => { setCopyright(event.target.value) }}/>
-            <label for="copyright"> I agree to the Terms and Conditions of Artist Network.</label>
-          </div>
-          <div >
-            <button onClick={() => sendData()} >Sign Up</button>
-          </div>
-          <div class="login-signup">
-            <p>Already have an account?</p> 
-            <button onClick={() => nav('/login')}>Login</button>
-          </div>
-          <div>
-            <p><strong>Terms and Conditions:</strong></p>
-          </div>
-          <div>
-            <p><strong>Users must submit orginal artwork and abide by Canadian Copyright Laws.</strong></p>
-          </div>
-          <div>
-            <p><strong>Artist Network is not legally repsonsible for any images posted on our platform.</strong></p>
+      <div id="signup-container">
+        <h1>Sign Up</h1>
+        <h2>Create Your Account</h2>
+        <div id="signup">
+        {/* <div><h1>{signedUp}</h1></div> */}
+          <div class="signup_container">
+          {/* <div><p>{signedUp}</p></div> */}
+          <div class="error-msg"><p>{errorMsg}</p></div>
+            <form>
+              <div class="fields">
+                <label for="name" >Name:</label>
+                <input id="name" type="text" ref={nameRef} onChange={(event) => { setName(event.target.value) }} />
+              </div>
+              <div class="fields">
+                <label for="username" >Username:</label>
+                <input id="username" type="text" ref={usernameRef} onChange={(event) => { setUser(event.target.value) }} />
+              </div>
+              <div class="fields">
+                <label for="password" >Password:</label>
+                <input id="password" type="password" ref={passwordRef} onChange={(event) => { setPass(event.target.value) }} />
+              </div>
+              <div>
+                <input type="checkbox" id="copyright" name="copyright" value="agree" ref={copyrightRef} onChange={(event) => { setCopyright(event.target.value) }}/>
+                <label for="copyright"> I agree to the Terms and Conditions of Artist Network.</label>
+              </div>
+              <div >
+                <button onClick={(e) => {sendData(e)} }>Sign Up</button>
+              </div>
+              <div class="login-signup">
+                <p>Already have an account?</p> 
+                <button onClick={() => nav('/login')}>Login</button>
+              </div>
+              <div>
+                <p><strong>Terms and Conditions:</strong></p>
+              </div>
+              <div>
+                <p><strong>Users must submit orginal artwork and abide by Canadian Copyright Laws.</strong></p>
+              </div>
+              <div>
+                <p><strong>Artist Network is not legally repsonsible for any images posted on our platform.</strong></p>
+              </div>
+            </form>
           </div>
         </div>
       </div>

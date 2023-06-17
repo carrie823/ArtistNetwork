@@ -13,6 +13,7 @@ export default function AddArtwork() {
   const [titleVal, setTitle] = useState("");;
   const [descriptionVal, setDescription] = useState("");
   const [imageVal, setImage] = useState("");
+  const [errorMsg, setMsg] = useState("");
   // const [nameVal, setName] = useState("");
 
 
@@ -45,6 +46,28 @@ export default function AddArtwork() {
     let desc = descriptionVal;
     let image = imageVal[0];
     // let name = nameVal;
+
+    if (imageRef.current.value === "" ) {
+      imageRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("hello");
+      return;
+    } 
+
+    if (titleRef.current.value === "" ) {
+      titleRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeello");
+      return;
+    } 
+
+    if (descriptionRef.current.value === "" ) {
+      descriptionRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeeelloooooo");
+      return;
+    } 
+
     console.log(image)
 
     let bodyX = { "title": title, "description": desc, "image": image, "username": username }
@@ -60,6 +83,7 @@ export default function AddArtwork() {
     <main id="artwork-form">
       {/* <HeaderMain /> */}
       <h1>New Post</h1>
+      <div class="error-msg"><p>{errorMsg}</p></div>
       <div id="addArt">
         <div class="addArt_container">
           <div id="file-btn" class="fields">
@@ -76,7 +100,7 @@ export default function AddArtwork() {
           </div>
           <div class="fields">
             <label for="description" >Description:</label>
-            <input type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
+            <input class="textbox" type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
           </div>
           {/* <div class="fields">
             <label for="password" >:</label>
@@ -84,6 +108,7 @@ export default function AddArtwork() {
           </div> */}
           <div >
             <button onClick={() => sendData()} >Submit</button>
+            <button onClick={() => nav('/studiospace')} >Cancel</button>
           </div>
         </div>
       </div>

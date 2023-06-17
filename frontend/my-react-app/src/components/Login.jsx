@@ -12,30 +12,44 @@ export function Login() {
   const [passwordVal, setPass] = useState("");;
   const [userVal, setUser] = useState("");
   const nav = useNavigate();
+  const [errorMsg, setMsg] = useState("");
 
   function send(sendMethod, url, data) {
 
     fetch(url, {
       method: sendMethod,
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+
       },
       body: JSON.stringify(data)
     }).then(response => {
       if (response.status === 200) {
         nav("/")
         return response.json()
+      } 
+      else if (response.status === 400){
+        console.log("ghghghghgh")
+        setMsg('Incorrect username or password');
       }
       return response.json();
     })
   }
 
-
+console.log("heheheh")
   function sendData() {
     // let nameX = nameVal;
     let pass = passwordVal;
     let user = userVal;
     console.log(user)
+
+    // if (response.status === 400) {
+    //   nameRef.current.focus();
+    //   setMsg('Incorrect username or password');
+    //   console.log("heeeeleleoeoeo");
+
+    // } 
 
     let bodyX = { username: user, password: pass }
 
@@ -54,6 +68,7 @@ export function Login() {
       <Header />
       <h1>Login</h1>
       <div id="login">
+        <div class="error-msg"><p>{errorMsg}</p></div>
         <div class="login_container">
           {/* <div class="fields">
             <label for="name" >Name:</label>

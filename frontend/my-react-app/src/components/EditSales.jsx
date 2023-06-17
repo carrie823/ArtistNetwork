@@ -18,12 +18,37 @@ export default function EditSales() {
   // const [imageVal, setImage] = useState("");
   // const [linkVal, setLink] = useState("");
   const [id, setID] = useState("");
+  const [errorMsg, setMsg] = useState("");
+
 
   function sendEdit() {
+
+    if (titleRef.current.value === "" ) {
+      titleRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeello");
+      return;
+    } 
+  
+    if (descriptionRef.current.value === "" ) {
+      descriptionRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeeelloooooo");
+      return;
+    } 
+  
+    if (linkRef.current.value === "" ) {
+      linkRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeeelloooooo");
+      return;
+    } 
+
     let updatedItemData = { "title": titleVal, "description": descriptionVal, "link": linkVal }
     console.log(location)
     fetch(`http://localhost:3001/api/items/updatesale/${location.state._id}`, {
       method: 'PUT',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -49,6 +74,7 @@ export default function EditSales() {
     <main id="sale-form">
       <HeaderMain />
       <h1>Edit Sale</h1>
+      <div class="error-msg"><p>{errorMsg}</p></div>
       <div id="edit-art">
         <div class="edit_container">
           <div class="fields">
@@ -57,14 +83,15 @@ export default function EditSales() {
           </div>
           <div class="fields">
             <label for="description">Description:</label>
-            <input type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
+            <input class="textbox" type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
           </div>
           <div class="fields">
             <label for="link">Shop Link:</label>
-            <input type="text" ref={descriptionRef} onChange={(event) => { setLink(event.target.value) }} />
+            <input type="text" ref={linkRef} onChange={(event) => { setLink(event.target.value) }} />
           </div>
-          <div>
+          <div class="edit-btns">
             <button onClick={() => sendEdit()} >Submit</button>
+            <button onClick={() => nav('/artistalley')} >Cancel</button>
           </div>
         </div>
       </div>

@@ -16,12 +16,30 @@ export default function EditArtwork() {
   // const [imageVal, setImage] = useState("");
   // const [linkVal, setLink] = useState("");
   const [id, setID] = useState("");
+  const [errorMsg, setMsg] = useState("");
+
 
   function sendEdit() {
+
+    if (titleRef.current.value === "" ) {
+      titleRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeello");
+      return;
+    } 
+
+    if (descriptionRef.current.value === "" ) {
+      descriptionRef.current.focus();
+      setMsg('Please complete missing information');
+      console.log("heeeelloooooo");
+      return;
+    } 
+
     let updatedItemData = { "title": titleVal, "description": descriptionVal }
     console.log(location)
     fetch(`http://localhost:3001/api/items/updateart/${location.state._id}`, {
       method: 'PUT',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -33,6 +51,7 @@ export default function EditArtwork() {
           nav("/studiospace")
           // Perform any necessary actions after successful update
         } else {
+
           console.log('Failed to update item');
         }
       })
@@ -47,6 +66,7 @@ export default function EditArtwork() {
     <main id="sale-form">
       <HeaderMain />
       <h1>Edit Post</h1>
+      <div class="error-msg"><p>{errorMsg}</p></div>
       <div id="edit-art">
         <div class="edit_container">
           <div class="fields">
@@ -55,10 +75,11 @@ export default function EditArtwork() {
           </div>
           <div class="fields">
             <label for="description">Description:</label>
-            <input type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
+            <input class="textbox" type="text" ref={descriptionRef} onChange={(event) => { setDescription(event.target.value) }} />
           </div>
-          <div>
+          <div class="edit-btns">
             <button onClick={() => sendEdit()} >Submit</button>
+            <button onClick={() => nav('/studiospace')} >Cancel</button>
           </div>
         </div>
       </div>

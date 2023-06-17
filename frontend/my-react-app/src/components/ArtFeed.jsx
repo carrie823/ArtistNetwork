@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import React from "react";
 
-export default function StudioSpaceInfo() {
+export default function ArtFeed() {
   const nav = useNavigate();
   // const artRef = useRef(null);
   const [image, setImage] = useState();
@@ -14,13 +14,13 @@ export default function StudioSpaceInfo() {
   const [page, setPage] = useState(0);
   const [noImage, setNoImage] = useState('');
   const [likes, setLikes] = useState(0);
-  const [username, setUsername] = useState('');
-  // const [name, setName] = useState("");
-
+  let userCookie = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+  const [username, setUsername] = useState(userCookie);
+  const [artist, setArtist] = useState();
 
   useEffect(() => {
-    let userCookie = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-    fetch(`http://localhost:3001/api/art/user/${userCookie}/?page=${page}`, {
+    setUsername(userCookie)
+    fetch(`http://localhost:3001/api/art/?page=${page}`, {
       method: "GET",
       mode: 'cors',
       headers: {
@@ -38,45 +38,20 @@ export default function StudioSpaceInfo() {
           setTitle(j[0].title)
           setDesc(j[0].description)
           setID(j[0]._id)
-          setUsername(j[0].username)
-          // setName(j[0].name)
           //console.log(j[0].likes)
+          setArtist(j[0].username)
           setImage(`http://localhost:3001/api/art/${j[0]._id}`)
         })
       }
     })
   }, []);
 
-  function sendDelete() {
-    fetch(`http://localhost:3001/api/items/${id}/`, {
-      method: 'DELETE',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    })
-      .then(response => {
-        if (response.ok) {
-          console.log('Item deleted successfully');
-          window.location.reload();
-        } else {
-          console.log('Failed to delete item');
-        }
-      })
-      .catch(error => {
-        console.log('Error:', error);
-      });
-  }
-
   function changePrevData() {
-    let userCookie = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     let n = page - 1
     if (n < 0) {
 
     } else {
-      fetch(`http://localhost:3001/api/art/user/${userCookie}/?page=${n}`, {
+      fetch(`http://localhost:3001/api/art/?page=${n}`, {
         method: "GET",
         mode: 'cors',
         headers: {
@@ -91,10 +66,9 @@ export default function StudioSpaceInfo() {
             setDesc(j[0].description)
             setLikes(j[0].likes)
             setID(j[0]._id)
-            setUsername(j[0].username)
+            setArtist(j[0].username)
             setImage(`http://localhost:3001/api/art/${j[0]._id}`)
             setPage(n)
-            // setName(j[0].name)
           })
         }
       })
@@ -102,9 +76,8 @@ export default function StudioSpaceInfo() {
   }
 
   function changeNextData() {
-    let userCookie = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     let n = page + 1
-    fetch(`http://localhost:3001/api/art/user/${userCookie}/?page=${n}`, {
+    fetch(`http://localhost:3001/api/art/?page=${n}`, {
       method: "GET",
       mode: 'cors',
       headers: {
@@ -119,10 +92,9 @@ export default function StudioSpaceInfo() {
           setDesc(j[0].description)
           setLikes(j[0].likes)
           setID(j[0]._id)
-          setUsername(j[0].username)
+          setArtist(j[0].username)
           setImage(`http://localhost:3001/api/art/${j[0]._id}`)
           setPage(n)
-          // setName(j[0].name)
         })
       }
     })
@@ -148,33 +120,26 @@ export default function StudioSpaceInfo() {
   }
 
   return (
-    <main id="studiospace-container">
-      <h1>Studio Space</h1>
-      <div id="btn-container">
-        <div>
-          <button onClick={() => nav('/addart')}>Add Artwork</button>
-        </div>
-        <div>
-          <button onClick={() => nav('/editartwork', { state: { "_id": id } })}>Edit Artwork</button>
-        </div>
-        <div >
-          <button onClick={() => sendDelete()} >Delete Artwork</button>
-        </div>
+    <main id="artfeed-container">
+      <div id="feed-heading">
+        <h1>{username}'s Feed</h1>
+      </div>
+      <h1>Artwork Posts</h1>
+      <div class="pages">
+        <button onClick={()=>changePrevData()} ><i class="fa-solid fa-caret-left"></i> Prev</button>
+        <button onClick={()=>changeNextData()} >Next <i class="fa-solid fa-caret-right"></i></button>
       </div>
       <div><h1>{noImage}</h1></div>
-      {/* <div><h1>{name}</h1></div> */}
-      <div><h2>{username}</h2></div>
-      <div><img src={image} width="400"/></div>
-      <div><h1>{title}</h1></div>
-      <div><h2>{desc}</h2></div>
-      <div class="likes">
-        <button onClick={() => updateLike()}><i class="fa-sharp fa-solid fa-heart"></i><p>{likes}</p></button>
+      <div id="artwork-content">
+        <div><strong><p>Artwork By: {artist}</p></strong></div>
+        <img src={image} width="400"/>
+        <div class="title"><strong><h1>{title}</h1></strong></div>
+        <div><strong><p>{desc}</p></strong></div>
+        <div class="likes">
+          <button onClick={() => updateLike()}><p>{likes}</p><i class="fa-sharp fa-solid fa-heart"></i></button>
+        </div>
       </div>
-      <div class="pages">
-        <button onClick={() => changePrevData()}   ><i class="fa-solid fa-caret-left"></i> Prev</button>
-        <button onClick={() => changeNextData()} >Next <i class="fa-solid fa-caret-right"></i></button>
-      </div>
-
     </main>
   );
+  
 }
