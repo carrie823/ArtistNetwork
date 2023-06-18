@@ -4,6 +4,12 @@ html, body, ul, li {
   margin: 0;
   padding: 0;
   list-style: none;
+  color: #003049;
+
+}
+
+main {
+  background-color: #dbedfb;
 }
 
 .App {
@@ -68,7 +74,7 @@ html, body, ul, li {
 #main-nav li {
   display: inline-block;
   margin-left: 20px;
-justify-content: space-evenly;
+  justify-content: space-evenly;
 }
 
 header {
@@ -94,7 +100,6 @@ button{
   border: none;
   font-size: 15px;
 
-  
 }
 
 button:hover{
@@ -157,6 +162,7 @@ input::file-selector-button {
   /* text-decoration: none; */
   /* display: flex; */
   /* justify-content: left; */
+  margin-top: 40px;
 }
 
 #footer-name a {
@@ -167,4 +173,70 @@ input::file-selector-button {
   text-decoration: none;
   /* display: flex;
   justify-content: left; */
+  
 }
+
+#hero-container{
+  padding: 20px 0 20px 0;
+  background-color: #a4d3ee;
+}
+
+/* background-color: #d0eaf9; */
+
+#hero-container h1 {
+  font-family: 'Righteous', cursive;
+  
+}
+
+.error-msg {
+  color: red;
+}
+
+/* .likes {
+  display: flex;
+  justify-content: right;
+} */
+
+/* i {
+  font-size: 20px;
+} */
+
+.pages button {
+  margin: 0 20px 0 20px;
+}
+
+.textbox{
+ height: 200px;
+ width: 300px;
+}
+
+.edit-btns button{
+  margin: 0 20px 0 20px;
+}
+
+#feed-heading {
+ color: #003049;
+ font-family: 'Righteous', cursive;
+ font-size: 20px;
+
+}
+
+#salefeed-container {
+  margin-top: 50px;
+}
+
+#artwork-content p{
+ font-size: 20px;
+ line-height: 0.7;
+}
+
+#sales-content p{
+  font-size: 20px;
+  line-height: 0.7;
+}
+
+img {
+  border-radius: 15px;
+  border: solid 3px #98c8e4;
+}
+
