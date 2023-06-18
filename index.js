@@ -11,27 +11,6 @@ let upload = multer({ dest: path.join(__dirname, 'uploads') });
 const { MongoClient, ObjectId } = require("mongodb")
 // const path = require('path');
 
-// app.use(express.static('frontend'));
-// const cookie = require('cookie')
-
-// app.use(session({
-//   secret: 'I am tired',
-//   resave: false,
-//   saveUninitialized: true,
-// }));
-
-// var authenticated = function(req, res, next) {
-//   if (!req.username) return res.status(401).end("access denied");
-//   next();
-// };
-
-// app.use(function (req, res, next){
-//   var cookies = cookie.parse(req.headers.cookie || '');
-//   req.username =(req.session.user)? req.session.user._id : ''
-//   console.log("HTTP request", req.username, req.method, req.url, req.body);
-//   next();
-// });
-
 
 //Mongo
 const dbUrl = "mongodb://localhost:27017/artistnetworkdb";
@@ -66,11 +45,22 @@ app.use(session({
 }));
 
 
+//Authentication
 var isAuthenticated = function (req, res, next) {
   if (!req.username) return res.status(401).end("access denied");
   next();
 };
 
+app.get("/auth", function (req, response) {
+  console.log(req.session.username);
+  if (req.session.user) {
+    response.status(200).send("success")
+  } else {
+    response.status(404).send("failure")
+  }
+})
+
+//Cookie
 app.use(function (req, res, next) {
   var cookies = cookie.parse(req.headers.cookie || '');
   req.username = (req.session.user) ? req.session.user._id : ''
@@ -79,24 +69,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-//app.use(express.static('frontend'));
-// const server = http.createServer(function (request, response){
-//   response.writeHeader(200, {"Content-Type": 'text/html'});
-//   response.write(html);
-//   response.end();
-// })
-// }
-
-// fs.readFile('/index.html', function (err, html) {
-
-//   if (err) throw err;    
-
-//   http.createServer(function(request, response) {  
-//       response.writeHeader(200, {"Content-Type": "text/html"});  
-//       response.write(html);  
-//       response.end();  
-//   }).listen(PORT);
-// });
 
 //test Express App
 app.get("/", async (request, response) => {
@@ -110,47 +82,13 @@ app.get("/artistalley", async (request, response) => {
 })
 
 
-// app.get("/comments", async (request, response) => {
-//   response.status(200).send("Test page3");
-//   await getComments();
-// })
-
 app.get("/studiospace", async (request, response) => {
   response.status(200).send("Test page4");
   await getArtworks();
 })
 
-// app.post("/signup", function (request, response) {
-//   console.log("hi")
-//   // console.log(request.body)=
-//   storeUserData(request.body);
-//   response.status(200)
-//   return response.json("you did it");
 
-// })
-
-app.get("/auth", function (req, response) {
-  console.log(req.session.username);
-  if (req.session.user) {
-    response.status(200).send("success")
-  } else {
-    response.status(404).send("failure")
-  }
-})
-
-app.get('/signout/', function (req, res, next) {
-  req.session.destroy();
-  res.setHeader('Set-Cookie', cookie.serialize('username', '', {
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
-  }));
-  return res.json({});
-
-});
-
-
-
-
+//Signup
 app.post("/signup", function (request, res) {
 
   let username = request.body.username;
@@ -162,19 +100,6 @@ app.post("/signup", function (request, res) {
   // async function hashPassword(password) { 
   const saltRound = 10;
 
-  //   const salt = await bcrypt.genSalt(saltRounds);
-  //   const hashedPassword = await bcrypt.hash(password, salt);
-  //   return hashedPassword;
-
-  // }
-
-  // async function passPassword() {
-  //   const password = 'mypass';
-  //   const hashedPassword = await hashPassword(password);
-  // } passPassword();
-  // console.log()
-
-
   bcrypt.hash(password, saltRound, function (err, hash) {
     client.connect().then(() => {
 
@@ -185,11 +110,7 @@ app.post("/signup", function (request, res) {
       collection.insertOne(b).then((r) => {
 
         if (r) {
-          // request.session.user = username;
-          // res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-          //   path: '/',
-          //   maxAge: 60 * 60 * 24 * 7
-          // }));
+
           res.status(200)
           return res.json("");
         } else {
@@ -203,24 +124,63 @@ app.post("/signup", function (request, res) {
   })
 })
 
-// app.get('/api/art/', function (req, res, next) {
-//   let page = parseInt(req.query.page)
-//   // console.log("FAEFFWF")
-//   db = client.db("artistnetworkdb");
-//   let collection = db.collection("artworks");
-//   collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
-//     if ((page + 1) > r.length || page < 0) {
-//       return res.status(400).end();
-//     }
-//     //console.log("this is " + n);
-//     console.log(r)
-//     res.status(200)
-//     //return res.json(r)
-//     return res.json([r[page]])
-//   })
-// })
+//login endpoint
+app.post("/login", function (request, response) {
+
+  // b = request.body;
+
+  let body = request.body;
+  let password = body.password
+  let user = body.username;
+
+  //console.log(formData);
+  client.connect().then(() => {
+
+    db = client.db("artistnetworkdb");
+    var collections = db.collection("users");
+
+    // let x = { "username": user }
+    // console.log(x)
+    collections.findOne({ "username": user }).then((username) => {
+      // console.log("FFFF")
+      if (!username) return response.status(401).end("access denied");
+
+      bcrypt.compare(password, username.password, function (err, res) {
+        if (res) {
+          console.log("TESTUBGWFGIAGW")
+          //console.log(username)
+          request.session.user = username;
+          console.log(username.username)
+          response.setHeader('Set-Cookie', cookie.serialize('username', username.username, {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7
+          }));
+          response.status(200)
+          // console.log(res);
+          return response.json(username);
+        } else {
+          response.status(400)
+          return response.json("access denied")
+        }
+      })
+    })
+  })
+})
+
+//Signout 
+app.get('/signout', function (req, res, next) {
+  req.session.destroy();
+  res.setHeader('Set-Cookie', cookie.serialize('username', '', {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+  }));
+  res.status(200);
+  return res.json({});
+
+});
 
 
+//Artwork sale endpoints
 app.get('/api/sale/', function (req, res, next) {
   let page = parseInt(req.query.page)
   // console.log("FAEFFWF")
@@ -248,44 +208,44 @@ app.get('/api/sale/', function (req, res, next) {
   })
 })
 
-app.get('/api/artfeed/', function (req, res, next) {
-  let page = parseInt(req.query.page)
-  // console.log("FAEFFWF")
-  db = client.db("artistnetworkdb");
-  let collection = db.collection("artworks");
-  collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
-    if (r.length == 0) {
-      res.status(404).end();
-    }
+// app.get('/api/artfeed/', function (req, res, next) {
+//   let page = parseInt(req.query.page)
+//   // console.log("FAEFFWF")
+//   db = client.db("artistnetworkdb");
+//   let collection = db.collection("artworks");
+//   collection.find({}).sort([['_id', -1]]).toArray().then((r) => {
+//     if (r.length == 0) {
+//       res.status(404).end();
+//     }
 
-    if ((page + 1) > r.length || page < 0) {
-      return res.status(400).end();
-    }
-    //console.log("this is " + n);
-    // console.log(r)
-    res.status(200)
-    //return res.json(r)
-    let result = r[page]
-    // console.log(result)
-    if (result === undefined) {
-      return res.json([r[0]])
-    }
-    return res.json([result])
+//     if ((page + 1) > r.length || page < 0) {
+//       return res.status(400).end();
+//     }
+//     //console.log("this is " + n);
+//     // console.log(r)
+//     res.status(200)
+//     //return res.json(r)
+//     let result = r[page]
+//     // console.log(result)
+//     if (result === undefined) {
+//       return res.json([r[0]])
+//     }
+//     return res.json([result])
 
-  })
-})
+//   })
+// })
 
-app.get("/api/artfeed/:id/", function (req, res, next) {
-  db = client.db("artistnetworkdb");
-  let collection = db.collection("artworks");
+// app.get("/api/artfeed/:id/", function (req, res, next) {
+//   db = client.db("artistnetworkdb");
+//   let collection = db.collection("artworks");
 
-  collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
-    //console.log(r)
-    res.setHeader('Content-Type', r[0].image.mimetype);
-    res.sendFile(r[0].image.path);
+//   collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
+//     //console.log(r)
+//     res.setHeader('Content-Type', r[0].image.mimetype);
+//     res.sendFile(r[0].image.path);
 
-  })
-})
+//   })
+// })
 
 app.get("/api/sale/:id/", function (req, res, next) {
   db = client.db("artistnetworkdb");
@@ -302,8 +262,12 @@ app.get("/api/sale/:id/", function (req, res, next) {
 
 app.post('/api/images/sales/', isAuthenticated, upload.single('image'), function (req, res, next) {
 
-  let image = { title: req.body.title, "description": req.body.description, "link": req.body.link, "image": req.file, "likes": 0 };
+  let image = { title: req.body.title, "description": req.body.description, "link": req.body.link, "image": req.file, "likes": 0, "username": req.body.username};
 
+  if (req.session.user.username !== req.body.username && req.session.user.username !== "admin") {
+    res.status(400)
+    return res.json("");
+  }
 
   client.connect().then(() => {
 
@@ -327,9 +291,43 @@ app.post('/api/images/sales/', isAuthenticated, upload.single('image'), function
 
 });
 
+app.get('/api/sale/user/:user/', function (req, res, next) {
+  let page = parseInt(req.query.page)
+  let userCookie = req.params.user;
+  // console.log("FAEFFWF")
+  db = client.db("artistnetworkdb");
+  let collection = db.collection("sales");
+
+  let person = { "username": userCookie };
+  if (userCookie === "admin") {
+    person = {}
+  }
+
+  collection.find(person).sort([['_id', -1]]).toArray().then((r) => {
+    console.log("WE MADE IT")
+    if (r.length == 0) {
+      res.status(404).end()
+    }
+    if ((page + 1) > r.length || page < 0) {
+      return res.status(400).end();
+    }
+    //console.log("this is " + n);
+    //console.log(r)
+    res.status(200)
+    //return res.json(r)
+    let result = r[page]
+    // console.log(result)
+    if (result === undefined) {
+      return res.json([r[0]])
+    }
+    return res.json([result])
+  })
+})
 
 
 
+
+//Artwork endpoints
 app.get('/api/art/', function (req, res, next) {
   let page = parseInt(req.query.page)
   let userCookie = req.query.userCookie;
@@ -358,7 +356,6 @@ app.get('/api/art/', function (req, res, next) {
 })
 
 
-
 app.get('/api/art/user/:user/', function (req, res, next) {
   let page = parseInt(req.query.page)
   let userCookie = req.params.user;
@@ -366,7 +363,11 @@ app.get('/api/art/user/:user/', function (req, res, next) {
   db = client.db("artistnetworkdb");
   let collection = db.collection("artworks");
 
-  collection.find({ "username": userCookie }).sort([['_id', -1]]).toArray().then((r) => {
+  let person = { "username": userCookie };
+  if (userCookie === "admin") {
+    person = {}
+  }
+  collection.find(person).sort([['_id', -1]]).toArray().then((r) => {
     console.log("WE MADE IT")
     if (r.length == 0) {
       res.status(404).end()
@@ -386,11 +387,6 @@ app.get('/api/art/user/:user/', function (req, res, next) {
     return res.json([result])
   })
 })
-
-
-
-
-
 
 
 app.get("/api/art/:id/", function (req, res, next) {
@@ -413,7 +409,7 @@ app.post('/api/images/arts/', isAuthenticated, upload.single('image'), function 
   console.log(req.session.user);
   console.log()
 
-  if (req.session.user.username !== req.body.username) {
+  if (req.session.user.username !== req.body.username && req.session.user.username !== "admin") {
     res.status(400)
     return res.json("");
 
@@ -443,14 +439,12 @@ app.post('/api/images/arts/', isAuthenticated, upload.single('image'), function 
 });
 
 
-
+//Delete endpoints
 app.delete('/api/items/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
 
   let db = client.db('artistnetworkdb'); // Replace with your database name
   let collection = db.collection('artworks'); // Replace with your collection name
-
-
 
   collection.deleteOne({ _id: new ObjectId(itemId) }).then((result) => {
     //if(result.author !==  req.session.user) return res.status(403).end("forbidden");
@@ -484,6 +478,7 @@ app.delete('/api/items/sale/:id/', isAuthenticated, (req, res) => {
 
 });
 
+//Edit endpoints
 app.put('/api/items/updateart/:id/', isAuthenticated, (req, res) => {
   let itemId = req.params.id;
   //console.log(itemId)
@@ -549,7 +544,6 @@ app.patch("/api/sale/:id/", function (req, res, next) {
   db = client.db("artistnetworkdb");
   let collection = db.collection("sales");
 
-
   collection.find({ _id: new ObjectId(req.params.id) }).toArray().then((r) => {
     r[0].likes = r[0].likes + 1;
     //return res.json(r);
@@ -568,52 +562,6 @@ app.patch("/api/sale/:id/", function (req, res, next) {
   })
 })
 
-
-
-
-app.post("/login", function (request, response) {
-
-  // b = request.body;
-
-  let body = request.body;
-  let password = body.password
-  let user = body.username;
-
-  //console.log(formData);
-  client.connect().then(() => {
-
-    db = client.db("artistnetworkdb");
-    var collections = db.collection("users");
-
-    // let x = { "username": user }
-    // console.log(x)
-    collections.findOne({ "username": user }).then((username) => {
-      // console.log("FFFF")
-      if (!username) return response.status(401).end("access denied");
-
-      bcrypt.compare(password, username.password, function (err, res) {
-        if (res) {
-          console.log("TESTUBGWFGIAGW")
-          //console.log(username)
-          request.session.user = username;
-          console.log(username.username)
-          response.setHeader('Set-Cookie', cookie.serialize('username', username.username, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7
-          }));
-
-
-          response.status(200)
-          // console.log(res);
-          return response.json(username);
-        } else {
-          response.status(400)
-          return response.json("access denied")
-        }
-      })
-    })
-  })
-})
 
 
 
