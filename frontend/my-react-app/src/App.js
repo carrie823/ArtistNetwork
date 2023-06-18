@@ -21,9 +21,9 @@ function App() {
       <BrowserRouter>
         {/* <Header /> */}
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/homefeed" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           <Route path="/studiospace" element={<StudioSpace />} />
           <Route path="/artistalley" element={<ArtistAlley />} />
           <Route path="/addart" element={<AddArt />} />
