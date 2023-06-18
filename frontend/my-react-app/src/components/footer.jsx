@@ -5,7 +5,7 @@ export default function footer() {
   return (
     <footer id="footer-name">
       <div>
-        <NavLink to="/">Artist Network <i class="fa-solid fa-pencil"></i></NavLink>
+        <NavLink to="/homefeed">Artist Network <i class="fa-solid fa-pencil"></i></NavLink>
       </div>
       <div>
         <p>© Copyright 2023 Artist Network</p>

@@ -13,7 +13,7 @@ export default function Nav() {
       }
     }).then(response => {
       if (response.ok) {
-        nav('/login')
+        nav('/')
       }
     })
   }
@@ -25,7 +25,7 @@ export default function Nav() {
       
       <ul>
         <li>
-          <NavLink to="/">Feed </NavLink> 
+          <NavLink to="/homefeed"> Home Feed </NavLink> 
         </li>
         <li>
           <NavLink to="/studiospace">Studio Space</NavLink>

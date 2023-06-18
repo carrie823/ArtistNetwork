@@ -6,7 +6,7 @@ export default function HeaderMain() {
   return (
     <header id="header">
       <h1 id="site-name">
-      <NavLink to="/">Artist Network <i class="fa-solid fa-pencil"></i></NavLink>
+      <NavLink to="/homefeed">Artist Network <i class="fa-solid fa-pencil"></i></NavLink>
       {/* <Link to="/">Artist Network</Link> */}
       </h1> 
         <Nav />

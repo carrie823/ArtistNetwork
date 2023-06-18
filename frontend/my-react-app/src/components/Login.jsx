@@ -26,7 +26,7 @@ export function Login() {
       body: JSON.stringify(data)
     }).then(response => {
       if (response.status === 200) {
-        nav("/")
+        nav("/homefeed")
         return response.json()
       } 
       else if (response.status === 400){
@@ -56,7 +56,7 @@ console.log("heheheh")
     send("POST", "http://localhost:3001/login/", bodyX, false, function (event) {
 
       if (event) {
-        nav("/")
+        nav("/homefeed")
       }
     });
 

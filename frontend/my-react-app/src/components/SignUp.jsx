@@ -32,7 +32,7 @@ export function SignUp() {
       body: JSON.stringify(data)
     }).then(response => {
       if (response.status === 200) {
-        nav('/login')
+        nav('/')
         // setSignedUp('Please Sign In on the Login Page')
         return response.json()
       }
@@ -127,7 +127,7 @@ export function SignUp() {
               </div>
               <div class="login-signup">
                 <p>Already have an account?</p> 
-                <button onClick={() => nav('/login')}>Login</button>
+                <button onClick={() => nav('/')}>Login</button>
               </div>
               <div>
                 <p><strong>Terms and Conditions:</strong></p>
